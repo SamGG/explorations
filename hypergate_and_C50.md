@@ -3,11 +3,21 @@ Hypergate and C5.0
 S. Granjeaud - CRCM
 21 August 2018
 
+-   [Releases](#releases)
 -   [Introduction](#introduction)
 -   [Hypergate example](#hypergate-example)
 -   [Reducing markers](#reducing-markers)
--   [Reoptimize strategy, without Ly6C](#reoptimize-strategy-without-ly6c)
--   [Expanding the comparisons](#expanding-the-comparisons)
+-   [Expand the number of populations](#expand-the-number-of-populations)
+
+#### Releases
+
+| Version  | Changes                        |
+|----------|:-------------------------------|
+| 18/08/21 | hypergate and C5.0 1st release |
+
+| TODO | Comment                                                      |
+|------|:-------------------------------------------------------------|
+|      | apply hypergate to mulitiple populations and compare to C5.0 |
 
 Introduction
 ------------
@@ -222,7 +232,7 @@ summary(model)
     ##  = as.factor(gate_vector))
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 10:18:34 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:19:56 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -279,7 +289,7 @@ summary(model)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 10:18:35 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:19:57 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -333,9 +343,9 @@ summary(model)
     ## 
     ## Time: 0.1 secs
 
-Same summary, but reults consists in rules.
+Same summary, but result consists in rules.
 
-Let's see the latest one.
+Let's see the last one.
 
 ``` r
 # Rule 4: (116, lift 15.7)
@@ -356,16 +366,16 @@ table(in.rule, gate_vector)
     ##   TRUE     0  116
 
 ``` r
-# Columns are the truth, the groups we defined
-# Rows are the prediction, the groups the algorithm defined
-# The last rule retains 116 events, 116 belong to the group, 0 are out of the group, but 10 events of the group are missing
+# Columns are the truth, the groups we defined 
+# Rows are the prediction the groups the algorithm defined
+# The last rule retains 116 events, 116 belong to the group, 0 are out of the
+# group, but 10 events of the group are missing
 ```
 
 Reducing markers
 ----------------
 
-Reoptimize strategy, without Ly6C
----------------------------------
+### Reoptimize strategy, without Ly6C
 
 The proposed optimization without Ly6C in the signature.
 
@@ -415,7 +425,7 @@ hgate_info(hg_output_polished)
     ## SiglecF_min  SiglecF    +   >   2.208221
     ## cKit_max        cKit    -  <=   1.770901
 
-Let's see if we remove the Ly6C marker.
+Let's see if we remove the Ly6C marker from the signature.
 
 ``` r
 hg_output1 = hypergate(xp = Samusik_01_subset$xp_src[,setdiff(Samusik_01_subset$regular_channels, c("Ly6C"))], gate_vector = gate_vector, level = 1, verbose = FALSE)
@@ -453,7 +463,7 @@ hgate_info(hg_output1)
 
 The result is nearly the same.
 
-Let's see if we remove the SiglecF marker.
+Let's see if we remove the SiglecF marker from the signature.
 
 ``` r
 hg_output_polished2 = reoptimize_strategy(gate = hg_output, channels_subset = c("SiglecF_min"), xp = Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels], 
@@ -489,6 +499,8 @@ hgate_info(hg_output_polished2)
     ##             channels sign comp threshold
     ## SiglecF_min  SiglecF    +   >   2.478972
 
+It still perform well using other markers.
+
 ### C5.0 alternative
 
 Maybe we can prune the tree at a higher level, but let's remove a marker and redo computation.
@@ -508,7 +520,7 @@ summary(model_reoptimzed)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 10:18:38 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:19:59 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -568,7 +580,7 @@ summary(model_reoptimzed)
     ##   14.70% cKit
     ## 
     ## 
-    ## Time: 0.2 secs
+    ## Time: 0.1 secs
 
 ``` r
 # Rule 4: (114/1, lift 15.6)
@@ -576,6 +588,7 @@ summary(model_reoptimzed)
 # SiglecF > 2.152557
 # cKit <= 1.794831
 # ->  class 1  [0.983]
+# While 13 events are missing, nearly all events are correctly identified
 in.rule = rep(TRUE, length(gate_vector))
 in.rule = in.rule & Samusik_01_subset$xp_src[,"F480"] > 1.084815
 in.rule = in.rule & Samusik_01_subset$xp_src[,"SiglecF"] > 2.152557
@@ -589,13 +602,12 @@ table(in.rule, gate_vector)
     ##   TRUE     1  113
 
 ``` r
-# While 13 events are missing, nearly all events are correctly identified
-
 # Rule 5: (114/1, lift 15.6)
 # SiglecF > 2.152557
 # cKit <= 1.794831
 # CD43 <= 2.243915
 # ->  class 1  [0.983]
+# same result with this slightly different rule
 in.rule = rep(TRUE, length(gate_vector))
 in.rule = in.rule & Samusik_01_subset$xp_src[,"SiglecF"] > 2.152557
 in.rule = in.rule & Samusik_01_subset$xp_src[,"cKit"] <= 1.794831
@@ -608,9 +620,7 @@ table(in.rule, gate_vector)
     ##   FALSE 1873   13
     ##   TRUE     1  113
 
-``` r
-# same result with this slightly different rule
-```
+Let's remove SiglecF from markers.
 
 ``` r
 # without SiglecF
@@ -625,7 +635,7 @@ summary(model_reoptimzed2)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 10:18:38 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:19:59 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -750,7 +760,7 @@ summary(model_reoptimzed2)
     ##   13.30% cKit
     ## 
     ## 
-    ## Time: 0.2 secs
+    ## Time: 0.1 secs
 
 ``` r
 # no simple rule
@@ -764,10 +774,10 @@ summary(model_reoptimzed2)
 #   ->  class 1  [0.988]
 ```
 
-Expanding the comparisons
--------------------------
+Expand the number of populations
+--------------------------------
 
-Graphical selection corresponds mainly to pop 8, ie Eosinophils.
+The graphical selection of hypergate corresponds mainly to pop 8, ie Eosinophils.
 
 ``` r
 # Identify the targetted cluster among annotated events
@@ -809,19 +819,20 @@ table(gate_vector_multi)
 
 ### C5.0
 
+Let's apply C5.0 to all those groups at once.
+
 ``` r
 model <- C5.0(Samusik_01_subset$xp_src[,Samusik_01_subset$regular_channels], as.factor(gate_vector_multi), rules = TRUE, control = C5.0Control(winnow = TRUE, noGlobalPruning = TRUE))
-summary(model)
+C50_head_tail <- function(model, head = 20, tail = 30) {
+  model_str <- strsplit(model$output, "\\n")[[1]]
+  if (length(model_str) < head + tail) return(model_str)
+  c(model_str[1:head], "", "...truncated result...", "", model_str[length(model_str)-(tail:1)])
+}
+cat(paste0(C50_head_tail(model), collapse = "\n"))
 ```
 
     ## 
-    ## Call:
-    ## C5.0.default(x =
-    ##  = as.factor(gate_vector_multi), rules = TRUE, control
-    ##  = C5.0Control(winnow = TRUE, noGlobalPruning = TRUE))
-    ## 
-    ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 10:18:39 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:20:00 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -840,257 +851,9 @@ summary(model)
     ##      14%  B220
     ##      14%  IgM
     ##      10%  CD3
-    ##      <1%  CD19
-    ##      <1%  CD4
     ## 
-    ## Rules:
+    ## ...truncated result...
     ## 
-    ## Rule 1: (517, lift 2.1)
-    ##  120g8 <= 2.263046
-    ##  CD11b <= 1.514394
-    ##  B220 <= 1.421784
-    ##  ->  class 0  [0.998]
-    ## 
-    ## Rule 2: (125, lift 2.1)
-    ##  120g8 <= 2.263046
-    ##  Ly6C <= 1.245526
-    ##  SiglecF <= 2.072324
-    ##  CD43 > 1.662729
-    ##  ->  class 0  [0.992]
-    ## 
-    ## Rule 3: (105, lift 2.1)
-    ##  CD3 > 0.7178241
-    ##  SiglecF <= 2.072324
-    ##  CD43 > 1.662729
-    ##  ->  class 0  [0.991]
-    ## 
-    ## Rule 4: (145/1, lift 2.1)
-    ##  120g8 <= 2.263046
-    ##  Ly6C <= 4.179779
-    ##  CD11b <= 2.475527
-    ##  SiglecF <= 2.072324
-    ##  CD43 > 1.662729
-    ##  ->  class 0  [0.986]
-    ## 
-    ## Rule 5: (10, lift 1.9)
-    ##  120g8 > 2.263046
-    ##  B220 <= 0.6241297
-    ##  ->  class 0  [0.917]
-    ## 
-    ## Rule 6: (9, lift 1.9)
-    ##  120g8 > 2.263046
-    ##  120g8 <= 2.730528
-    ##  B220 <= 1.094889
-    ##  ->  class 0  [0.909]
-    ## 
-    ## Rule 7: (1893/948, lift 1.0)
-    ##  120g8 <= 2.263046
-    ##  ->  class 0  [0.499]
-    ## 
-    ## Rule 8: (49, lift 6.3)
-    ##  IgD > -0.1594698
-    ##  Ly6C > 3.519114
-    ##  CD11b > 1.514394
-    ##  SiglecF <= 1.066644
-    ##  CD43 > 0.8099773
-    ##  CD43 <= 1.500622
-    ##  ->  class 5  [0.980]
-    ## 
-    ## Rule 9: (34, lift 6.2)
-    ##  CD3 <= 0.01365089
-    ##  120g8 <= 0.6979489
-    ##  Ly6C > 2.72279
-    ##  Ly6C <= 5.638844
-    ##  CD4 > 0.7334008
-    ##  CD11b > 1.739992
-    ##  SiglecF <= 1.510146
-    ##  CD43 <= 1.662729
-    ##  ->  class 5  [0.972]
-    ## 
-    ## Rule 10: (56/1, lift 6.2)
-    ##  IgD > -0.1594698
-    ##  Ly6C > 3.519114
-    ##  CD4 > -0.03362644
-    ##  CD11b > 1.514394
-    ##  SiglecF <= 1.510146
-    ##  CD43 > 0.8099773
-    ##  CD43 <= 1.500622
-    ##  ->  class 5  [0.966]
-    ## 
-    ## Rule 11: (200/7, lift 6.2)
-    ##  CD3 <= 0.706213
-    ##  Ly6C > 2.72279
-    ##  CD4 <= 0.7334008
-    ##  CD11b > 1.514394
-    ##  SiglecF <= 1.510146
-    ##  B220 <= 1.059991
-    ##  CD43 <= 0.8099773
-    ##  ->  class 5  [0.960]
-    ## 
-    ## Rule 12: (66/2, lift 6.1)
-    ##  CD3 > 0.0392133
-    ##  CD3 <= 0.706213
-    ##  Ly6C > 2.72279
-    ##  Ly6C <= 5.638844
-    ##  CD11b > 1.739992
-    ##  B220 <= 1.059991
-    ##  CD43 <= 0.8099773
-    ##  ->  class 5  [0.956]
-    ## 
-    ## Rule 13: (51/2, lift 6.0)
-    ##  CD3 <= 0.706213
-    ##  Ly6C > 2.72279
-    ##  Ly6C <= 3.519114
-    ##  CD11b > 1.514394
-    ##  SiglecF <= 1.510146
-    ##  B220 <= 0.03130792
-    ##  CD43 <= 0.9585344
-    ##  ->  class 5  [0.943]
-    ## 
-    ## Rule 14: (4, lift 5.3)
-    ##  Ly6C > 4.179779
-    ##  SiglecF > 0.815084
-    ##  SiglecF <= 1.510146
-    ##  CD43 > 1.500622
-    ##  CD43 <= 1.662729
-    ##  ->  class 5  [0.833]
-    ## 
-    ## Rule 15: (61, lift 16.1)
-    ##  CD3 <= 0.05587149
-    ##  CD11b > 1.66309
-    ##  SiglecF > 2.072324
-    ##  CD43 <= 2.484479
-    ##  ->  class 8  [0.984]
-    ## 
-    ## Rule 16: (55/1, lift 15.8)
-    ##  IgD > -0.0415644
-    ##  Ly6C <= 3.264551
-    ##  CD11b > 1.66309
-    ##  SiglecF > 2.072324
-    ##  CD43 <= 2.484479
-    ##  ->  class 8  [0.965]
-    ## 
-    ## Rule 17: (108/3, lift 15.8)
-    ##  Ly6C <= 3.264551
-    ##  CD11b > 1.66309
-    ##  SiglecF > 2.072324
-    ##  B220 <= 0.8895635
-    ##  CD43 <= 2.484479
-    ##  ->  class 8  [0.964]
-    ## 
-    ## Rule 18: (59/3, lift 15.3)
-    ##  CD11b > 1.66309
-    ##  CD11b <= 2.810696
-    ##  SiglecF > 2.072324
-    ##  ->  class 8  [0.934]
-    ## 
-    ## Rule 19: (36/1, lift 22.8)
-    ##  IgD <= 0.5975951
-    ##  CD19 > -0.08947128
-    ##  Ly6C > -0.0549545
-    ##  SiglecF > -0.07640991
-    ##  B220 > 1.421784
-    ##  CD43 <= 0.5185592
-    ##  IgM > 1.389272
-    ##  ->  class 12  [0.947]
-    ## 
-    ## Rule 20: (75/5, lift 22.2)
-    ##  IgD <= 0.5975951
-    ##  B220 > 2.039172
-    ##  IgM > 1.389272
-    ##  ->  class 12  [0.922]
-    ## 
-    ## Rule 21: (31/2, lift 21.9)
-    ##  IgD <= 0.5975951
-    ##  CD3 > -0.0382559
-    ##  B220 > 1.421784
-    ##  CD43 <= 0.5185592
-    ##  IgM > 1.389272
-    ##  ->  class 12  [0.909]
-    ## 
-    ## Rule 22: (146/2, lift 11.6)
-    ##  IgD > 1.645116
-    ##  B220 > 3.096402
-    ##  CD43 <= 1.32543
-    ##  IgM > 1.339117
-    ##  ->  class 13  [0.980]
-    ## 
-    ## Rule 23: (128/2, lift 11.6)
-    ##  IgD > 1.645116
-    ##  CD43 <= 0.2370735
-    ##  IgM > 1.339117
-    ##  ->  class 13  [0.977]
-    ## 
-    ## Rule 24: (118/3, lift 11.4)
-    ##  IgD > 1.362187
-    ##  CD3 <= 0.3515496
-    ##  CD43 <= 1.32543
-    ##  IgM > 1.339117
-    ##  IgM <= 4.037131
-    ##  ->  class 13  [0.967]
-    ## 
-    ## Rule 25: (84/2, lift 11.4)
-    ##  IgD > 1.481881
-    ##  CD3 > -0.06882294
-    ##  CD3 <= 0.3515496
-    ##  CD43 <= 1.32543
-    ##  IgM > 1.339117
-    ##  ->  class 13  [0.965]
-    ## 
-    ## Rule 26: (157/10, lift 7.1)
-    ##  IgD <= 1.362187
-    ##  CD3 <= 0.7178241
-    ##  Ly6C > 1.245526
-    ##  Ly6C <= 4.179779
-    ##  CD11b > 4.033347
-    ##  SiglecF <= 2.072324
-    ##  CD43 > 1.662729
-    ##  ->  class 15  [0.931]
-    ## 
-    ## Rule 27: (192/14, lift 7.0)
-    ##  IgD <= 1.362187
-    ##  CD3 <= 0.7178241
-    ##  Ly6C > 1.245526
-    ##  Ly6C <= 4.499773
-    ##  CD11b > 1.514394
-    ##  SiglecF <= 1.428505
-    ##  CD43 > 2.327613
-    ##  ->  class 15  [0.923]
-    ## 
-    ## Rule 28: (262/21, lift 7.0)
-    ##  IgD <= 1.362187
-    ##  CD3 <= 0.7178241
-    ##  Ly6C > 1.245526
-    ##  Ly6C <= 4.179779
-    ##  CD11b > 2.475527
-    ##  SiglecF <= 1.913224
-    ##  CD43 > 1.662729
-    ##  ->  class 15  [0.917]
-    ## 
-    ## Rule 29: (26/7, lift 5.5)
-    ##  IgD <= -0.1471776
-    ##  CD11b > 1.66309
-    ##  CD43 > 2.484479
-    ##  ->  class 15  [0.714]
-    ## 
-    ## Rule 30: (87/2, lift 21.0)
-    ##  120g8 > 2.263046
-    ##  B220 > 1.094889
-    ##  ->  class 23  [0.966]
-    ## 
-    ## Rule 31: (82/2, lift 21.0)
-    ##  120g8 > 2.730528
-    ##  B220 > 0.6241297
-    ##  ->  class 23  [0.964]
-    ## 
-    ## Default class: 0
-    ## 
-    ## 
-    ## Evaluation on training data (2000 cases):
-    ## 
-    ##          Rules     
-    ##    ----------------
-    ##      No      Errors
     ## 
     ##      31   69( 3.5%)   <<
     ## 
@@ -1119,20 +882,14 @@ summary(model)
     ##   14.25% CD4
     ##   13.10% IgM
     ##    1.80% CD19
-    ## 
-    ## 
-    ## Time: 0.5 secs
-
-``` r
-# get rules of the model
-c50.rules = strsplit(model$rules, "\\n")[[1]]
-```
 
 C5.0 is performing very well.
 
 Let's find best rules using F scores.
 
 ``` r
+# get rules of the model
+c50.rules = strsplit(model$rules, "\\n")[[1]]
 # parse rules attributes
 rules = c("conds,cover,TP,lift,class")
 for (i in grep("conds", c50.rules)) {
@@ -1175,25 +932,19 @@ head(rules)
 rules.best.idx = sapply(unique(rules$class), function(cl) { c50.rules = rules[rules$class == cl, , drop = FALSE]; rownames(c50.rules[which.max(c50.rules$Fscore), , drop = FALSE])})
 rules.best = rules[rules.best.idx,]
 # Compare True Positive (TP) and Count (from manual annotation)
-rules.best
+library(knitr)
+kable(rules.best)
 ```
 
-    ##    class conds cover  TP     lift Count    Fscore    purity    recall  FN
-    ## 1      0     3   517 517  2.07932   960 0.7000677 1.0000000 0.5385417 443
-    ## 11     5     7   200 193  6.15638   312 0.7539062 0.9650000 0.6185897 119
-    ## 17     8     5   108 105 15.79730   122 0.9130435 0.9722222 0.8606557  17
-    ## 20    12     3    75  70 22.21870    83 0.8860759 0.9333333 0.8433735  13
-    ## 22    13     4   146 144 11.59440   169 0.9142857 0.9863014 0.8520710  25
-    ## 28    15     7   262 241  6.99746   262 0.9198473 0.9198473 0.9198473  21
-    ## 30    23     2    87  85 21.00640    92 0.9497207 0.9770115 0.9239130   7
-    ##    FP
-    ## 1   0
-    ## 11  7
-    ## 17  3
-    ## 20  5
-    ## 22  2
-    ## 28 21
-    ## 30  2
+|     |  class|  conds|  cover|   TP|      lift|  Count|     Fscore|     purity|     recall|   FN|   FP|
+|-----|------:|------:|------:|----:|---------:|------:|----------:|----------:|----------:|----:|----:|
+| 1   |      0|      3|    517|  517|   2.07932|    960|  0.7000677|  1.0000000|  0.5385417|  443|    0|
+| 11  |      5|      7|    200|  193|   6.15638|    312|  0.7539062|  0.9650000|  0.6185897|  119|    7|
+| 17  |      8|      5|    108|  105|  15.79730|    122|  0.9130435|  0.9722222|  0.8606557|   17|    3|
+| 20  |     12|      3|     75|   70|  22.21870|     83|  0.8860759|  0.9333333|  0.8433735|   13|    5|
+| 22  |     13|      4|    146|  144|  11.59440|    169|  0.9142857|  0.9863014|  0.8520710|   25|    2|
+| 28  |     15|      7|    262|  241|   6.99746|    262|  0.9198473|  0.9198473|  0.9198473|   21|   21|
+| 30  |     23|      2|     87|   85|  21.00640|     92|  0.9497207|  0.9770115|  0.9239130|    7|    2|
 
 Let's extract rule defintions.
 
@@ -1230,46 +981,35 @@ Extract simplified population definitions for biologist.
 
 ``` r
 # Extract simplified population definitions for biologist
-sapply(rownames(rules.best), function(i) C50_pheno(subset(rule.defs, rule == i)))
+kable(sapply(rownames(rules.best), function(i) C50_pheno(subset(rule.defs, rule == i))))
 ```
 
-    ##                                                   1 
-    ##                             "120g8-, CD11b-, B220-" 
-    ##                                                  11 
-    ## "CD3-, Ly6C+, CD4-, CD11b+, SiglecF-, B220-, CD43-" 
-    ##                                                  17 
-    ##             "Ly6C-, CD11b+, SiglecF+, B220-, CD43-" 
-    ##                                                  20 
-    ##                                 "IgD-, B220+, IgM+" 
-    ##                                                  22 
-    ##                          "IgD+, B220+, CD43-, IgM+" 
-    ##                                                  28 
-    ## "IgD-, CD3-, Ly6C+, Ly6C-, CD11b+, SiglecF-, CD43+" 
-    ##                                                  30 
-    ##                                     "120g8+, B220+"
+|     | x                                                 |
+|-----|:--------------------------------------------------|
+| 1   | 120g8-, CD11b-, B220-                             |
+| 11  | CD3-, Ly6C+, CD4-, CD11b+, SiglecF-, B220-, CD43- |
+| 17  | Ly6C-, CD11b+, SiglecF+, B220-, CD43-             |
+| 20  | IgD-, B220+, IgM+                                 |
+| 22  | IgD+, B220+, CD43-, IgM+                          |
+| 28  | IgD-, CD3-, Ly6C+, Ly6C-, CD11b+, SiglecF-, CD43+ |
+| 30  | 120g8+, B220+                                     |
 
 ``` r
-sapply(rownames(rules.best), function(i) C50_rule(subset(rule.defs, rule == i)))
+kable(sapply(rownames(rules.best), function(i) C50_rule(subset(rule.defs, rule == i))))
 ```
 
-    ##                                                                               1 
-    ##                                             "120g8<2.26, CD11b<1.51, B220<1.42" 
-    ##                                                                              11 
-    ## "CD3<0.71, Ly6C>2.72, CD4<0.73, CD11b>1.51, SiglecF<1.51, B220<1.06, CD43<0.81" 
-    ##                                                                              17 
-    ##                     "Ly6C<3.26, CD11b>1.66, SiglecF>2.07, B220<0.89, CD43<2.48" 
-    ##                                                                              20 
-    ##                                                  "IgD<0.6, B220>2.04, IgM>1.39" 
-    ##                                                                              22 
-    ##                                       "IgD>1.65, B220>3.1, CD43<1.33, IgM>1.34" 
-    ##                                                                              28 
-    ## "IgD<1.36, CD3<0.72, Ly6C>1.25, Ly6C<4.18, CD11b>2.48, SiglecF<1.91, CD43>1.66" 
-    ##                                                                              30 
-    ##                                                         "120g8>2.26, B220>1.09"
+|     | x                                                                                                  |
+|-----|:---------------------------------------------------------------------------------------------------|
+| 1   | 120g8&lt;2.26, CD11b&lt;1.51, B220&lt;1.42                                                         |
+| 11  | CD3&lt;0.71, Ly6C&gt;2.72, CD4&lt;0.73, CD11b&gt;1.51, SiglecF&lt;1.51, B220&lt;1.06, CD43&lt;0.81 |
+| 17  | Ly6C&lt;3.26, CD11b&gt;1.66, SiglecF&gt;2.07, B220&lt;0.89, CD43&lt;2.48                           |
+| 20  | IgD&lt;0.6, B220&gt;2.04, IgM&gt;1.39                                                              |
+| 22  | IgD&gt;1.65, B220&gt;3.1, CD43&lt;1.33, IgM&gt;1.34                                                |
+| 28  | IgD&lt;1.36, CD3&lt;0.72, Ly6C&gt;1.25, Ly6C&lt;4.18, CD11b&gt;2.48, SiglecF&lt;1.91, CD43&gt;1.66 |
+| 30  | 120g8&gt;2.26, B220&gt;1.09                                                                        |
 
 ``` r
 # cbind
-library(knitr)
 kable(rules.best)
 ```
 

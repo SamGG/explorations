@@ -15,6 +15,17 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#### Releases
+
+| Version    | Changes
+|------------|:---------------------------------------------------------------|
+| 18/08/21   | hypergate and C5.0 1st release
+
+
+| TODO       | Comment
+|------------|:---------------------------------------------------------------|
+|            | apply hypergate to mulitiple populations and compare to C5.0
+
 ## Introduction
 
 Hypergate is a package that aims to characterize and find a signature of a selected set of events. The result could be interpreted as signature or a gating strategy. Hypergate is available at .
@@ -161,9 +172,9 @@ We can also focuss on rules that gives an easier interpretation.
 model <- C5.0(Samusik_01_subset$xp_src[,Samusik_01_subset$regular_channels], as.factor(gate_vector), rules = TRUE)
 summary(model)
 ```
-Same summary, but reults consists in rules.
+Same summary, but result consists in rules.
 
-Let's see the latest one.
+Let's see the last one.
 ```{r}
 # Rule 4: (116, lift 15.7)
 # 	Ly6C <= 2.884321
@@ -175,15 +186,16 @@ in.rule = in.rule & Samusik_01_subset$xp_src[,"Ly6C"] <= 2.884321
 in.rule = in.rule & Samusik_01_subset$xp_src[,"SiglecF"] > 2.152557
 in.rule = in.rule & Samusik_01_subset$xp_src[,"cKit"]  <= 1.794831
 table(in.rule, gate_vector)
-# Columns are the truth, the groups we defined
-# Rows are the prediction, the groups the algorithm defined
-# The last rule retains 116 events, 116 belong to the group, 0 are out of the group, but 10 events of the group are missing
+# Columns are the truth, the groups we defined 
+# Rows are the prediction the groups the algorithm defined
+# The last rule retains 116 events, 116 belong to the group, 0 are out of the
+# group, but 10 events of the group are missing
 ```
 
 
 ## Reducing markers
 
-## Reoptimize strategy, without Ly6C
+### Reoptimize strategy, without Ly6C
 
 The proposed optimization without Ly6C in the signature.
 ```{r}
@@ -200,7 +212,7 @@ plot_gating_strategy(gate = hg_output_polished, xp = Samusik_01_subset$xp_src[,
 hgate_info(hg_output_polished)
 ```
 
-Let's see if we remove the Ly6C marker.
+Let's see if we remove the Ly6C marker from the signature.
 ```{r}
 hg_output1 = hypergate(xp = Samusik_01_subset$xp_src[,setdiff(Samusik_01_subset$regular_channels, c("Ly6C"))], gate_vector = gate_vector, level = 1, verbose = FALSE)
 gating_predicted1 = subset_matrix_hg(hg_output1,
@@ -215,7 +227,7 @@ hgate_info(hg_output1)
 ```
 The result is nearly the same.
 
-Let's see if we remove the SiglecF marker.
+Let's see if we remove the SiglecF marker from the signature.
 ```{r}
 hg_output_polished2 = reoptimize_strategy(gate = hg_output, channels_subset = c("SiglecF_min"), xp = Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels], 
     gate_vector = gate_vector, level = 1)
@@ -230,6 +242,7 @@ table(ifelse(gating_predicted_polished2, "Gated-in", "Gated-out"),
       ifelse(gate_vector == 1, "Events of interest", "Others"))
 hgate_info(hg_output_polished2)
 ```
+It still perform well using other markers.
 
 
 ### C5.0 alternative
@@ -247,26 +260,27 @@ summary(model_reoptimzed)
 # SiglecF > 2.152557
 # cKit <= 1.794831
 # ->  class 1  [0.983]
+# While 13 events are missing, nearly all events are correctly identified
 in.rule = rep(TRUE, length(gate_vector))
 in.rule = in.rule & Samusik_01_subset$xp_src[,"F480"] > 1.084815
 in.rule = in.rule & Samusik_01_subset$xp_src[,"SiglecF"] > 2.152557
 in.rule = in.rule & Samusik_01_subset$xp_src[,"cKit"] <= 1.794831
 table(in.rule, gate_vector)
-# While 13 events are missing, nearly all events are correctly identified
 
 # Rule 5: (114/1, lift 15.6)
 # SiglecF > 2.152557
 # cKit <= 1.794831
 # CD43 <= 2.243915
 # ->  class 1  [0.983]
+# same result with this slightly different rule
 in.rule = rep(TRUE, length(gate_vector))
 in.rule = in.rule & Samusik_01_subset$xp_src[,"SiglecF"] > 2.152557
 in.rule = in.rule & Samusik_01_subset$xp_src[,"cKit"] <= 1.794831
 in.rule = in.rule & Samusik_01_subset$xp_src[,"CD43"] <= 2.243915
 table(in.rule, gate_vector)
-# same result with this slightly different rule
 ```
 
+Let's remove SiglecF from markers.
 ```{r}
 # without SiglecF
 model_reoptimzed2 <- C5.0(Samusik_01_subset$xp_src[,setdiff(Samusik_01_subset$regular_channels, c("SiglecF"))], as.factor(gate_vector), rules = TRUE)
@@ -283,9 +297,9 @@ summary(model_reoptimzed2)
 ```
 
 
-## Expanding the comparisons
+## Expand the number of populations
 
-Graphical selection corresponds mainly to pop 8, ie Eosinophils.
+The graphical selection of hypergate corresponds mainly to pop 8, ie Eosinophils.
 ```{r}
 # Identify the targetted cluster among annotated events
 table(gate_vector, Samusik_01_subset$labels)
@@ -304,17 +318,22 @@ table(gate_vector_multi)
 
 ### C5.0
 
+Let's apply C5.0 to all those groups at once.
 ```{r}
 model <- C5.0(Samusik_01_subset$xp_src[,Samusik_01_subset$regular_channels], as.factor(gate_vector_multi), rules = TRUE, control = C5.0Control(winnow = TRUE, noGlobalPruning = TRUE))
-summary(model)
-
-# get rules of the model
-c50.rules = strsplit(model$rules, "\\n")[[1]]
+C50_head_tail <- function(model, head = 20, tail = 30) {
+  model_str <- strsplit(model$output, "\\n")[[1]]
+  if (length(model_str) < head + tail) return(model_str)
+  c(model_str[1:head], "", "...truncated result...", "", model_str[length(model_str)-(tail:1)])
+}
+cat(paste0(C50_head_tail(model), collapse = "\n"))
 ```
 C5.0 is performing very well.
 
 Let's find best rules using F scores.
 ```{r}
+# get rules of the model
+c50.rules = strsplit(model$rules, "\\n")[[1]]
 # parse rules attributes
 rules = c("conds,cover,TP,lift,class")
 for (i in grep("conds", c50.rules)) {
@@ -340,7 +359,8 @@ head(rules)
 rules.best.idx = sapply(unique(rules$class), function(cl) { c50.rules = rules[rules$class == cl, , drop = FALSE]; rownames(c50.rules[which.max(c50.rules$Fscore), , drop = FALSE])})
 rules.best = rules[rules.best.idx,]
 # Compare True Positive (TP) and Count (from manual annotation)
-rules.best
+library(knitr)
+kable(rules.best)
 ```
 
 Let's extract rule defintions.
@@ -376,11 +396,10 @@ C50_rule <- function(gate, collapse = ", ", digits = 2) {
 Extract simplified population definitions for biologist.
 ```{r}
 # Extract simplified population definitions for biologist
-sapply(rownames(rules.best), function(i) C50_pheno(subset(rule.defs, rule == i)))
-sapply(rownames(rules.best), function(i) C50_rule(subset(rule.defs, rule == i)))
+kable(sapply(rownames(rules.best), function(i) C50_pheno(subset(rule.defs, rule == i))))
+kable(sapply(rownames(rules.best), function(i) C50_rule(subset(rule.defs, rule == i))))
 
 # cbind
-library(knitr)
 kable(rules.best)
 kable(cbind(pheno = sapply(rownames(rules.best), function(i) C50_pheno(subset(rule.defs, rule == i))), pop = c("Others", pops[rules.best$class])))
 ```
