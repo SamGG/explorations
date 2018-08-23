@@ -232,7 +232,7 @@ summary(model)
     ##  = as.factor(gate_vector))
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:26:23 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:28:53 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -289,7 +289,7 @@ summary(model)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:26:24 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:28:53 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -520,7 +520,7 @@ summary(model_reoptimzed)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:26:26 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:28:55 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -635,7 +635,7 @@ summary(model_reoptimzed2)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:26:26 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:28:56 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -832,7 +832,7 @@ cat(paste0(C50_head_tail(model), collapse = "\n"))
 ```
 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:26:27 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:28:56 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
