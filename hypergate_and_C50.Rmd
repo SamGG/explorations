@@ -227,7 +227,7 @@ hgate_info(hg_output1)
 ```
 The result is nearly the same.
 
-Let's see if we remove the SiglecF marker from the signature.
+Let's see if we keep the SiglecF marker alone.
 ```{r}
 hg_output_polished2 = reoptimize_strategy(gate = hg_output, channels_subset = c("SiglecF_min"), xp = Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels], 
     gate_vector = gate_vector, level = 1)
