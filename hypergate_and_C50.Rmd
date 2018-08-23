@@ -1,0 +1,386 @@
+---
+title: "Hypergate and C5.0"
+author: "S. Granjeaud - CRCM"
+date: "21 August 2018"
+output:
+  github_document:
+    fig_width: 8
+    fig_height: 6
+    dev: jpeg
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Hypergate is a package that aims to characterize and find a signature of a selected set of events. The result could be interpreted as signature or a gating strategy. Hypergate is available at .
+
+C5.0 is a decision tree algorithm that aims to find splits on original axes that allow to separate multiple groups of data points.
+
+Let's compare their results.
+
+Before add some helper functions.
+```{r}
+
+#' @title hgate_info
+#' @description Extract information about a hypergate return: the channels of the phenotype, the sign of the channels, the sign of the comparison, the thresholds.
+#' @param gate A hypergate object (produced by hypergate())
+#' @return A data.frame with channel, sign, comp and threshold columns
+#' @seealso \code{\link{hg_pheno}}, \code{\link{hg_rule}}
+#' @examples
+#' data(Samusik_01_subset)
+#' xp=Samusik_01_subset$xp_src[,Samusik_01_subset$regular_channels]
+#' gate_vector=Samusik_01_subset$labels
+#' hg=hypergate(xp=xp,gate_vector=gate_vector,level=23,delta_add=0.01)
+#' hgate_info(gate=hg)
+#' hgate_pheno(gate=hg)
+#' hgate_rule(gate=hg)
+#' @export
+
+hgate_info <- function(gate) {
+  # retrieve threshold
+  pars = gate$pars.history
+  active_pars = gate$active_channels
+  pars = pars[, active_pars, drop = FALSE]
+  pars_order = apply(pars, 2, function(x) min(which(x != x[1])))
+  pars = pars[, order(pars_order, decreasing = FALSE), drop = FALSE]
+  pars = setNames(pars[nrow(pars), , drop = TRUE], colnames(pars))
+  # get channel names
+  channels = sub("_max", "", names(pars))
+  channels = sub("_min", "", channels)
+  # phenotype sign
+  dir.sign = rep('+', length(pars))
+  dir.sign[grep("_max", names(pars))] = '-'
+  # comparison sign
+  dir.comp = rep(' > ', length(pars))
+  dir.comp[grep("_max", names(pars))] = ' <= '
+# all together
+  data.frame(
+    channels, sign = dir.sign, comp = dir.comp, threshold = pars
+  )
+}
+
+#' @title hgate_pheno
+#' @description Build a human readable phenotype, i.e. a combination of channels and sign (+ or -) from a hypergate return.
+#' @param gate A hypergate object (produced by hypergate())
+#' @return A string representing the phenotype.
+#' @seealso \code{\link{hg_rule}}, \code{\link{hg_info}}
+#' @examples
+#' ## See hgate_info
+#' @export
+
+hgate_pheno <- function(gate, collapse = ", ") {
+  with(hgate_info(gate), paste0(channels, sign, collapse = collapse))
+}
+
+#' @title hgate_info
+#' @description Extract information about a hypergate return: the channels of the phenotype, the sign of the channels, the sign of the comparison, the thresholds.
+#' @param gate A hypergate object (produced by hypergate())
+#' @return A data.frame with channel, sign, comp and threshold columns
+#' @seealso \code{\link{hg_pheno}}, \code{\link{hg_rule}}
+#' @examples
+#' ## See hgate_info
+#' @export
+
+hgate_rule <- function(gate, collapse = ", ", digits = 2) {
+  with(hgate_info(gate), paste0(channels, comp, round(threshold, digits), collapse = collapse))
+}
+```
+
+## Hypergate example
+
+### Rerun hypergate
+
+```{r}
+library(hypergate)
+
+# Example data overview
+data(Samusik_01_subset,package="hypergate")
+head(Samusik_01_subset$labels, 10)
+head(Samusik_01_subset$regular_channels, 10)
+head(Samusik_01_subset$xp_src[,"label"], 10)
+
+# Select a group of events
+x = c(12.54, 8.08, 7.12, 12.12, 17.32, 20.62, 21.04, 20.83, 18.07, 15.2)
+y = c(-10.61, -14.76, -18.55, -20.33, -21.16, -19.74, -14.4, -11.08, -10.02, -9.42)
+pol = list(x = x, y = y)
+gate_vector = sp::point.in.polygon(Samusik_01_subset$tsne[, 1], 
+                                   Samusik_01_subset$tsne[, 2], pol$x, pol$y)
+plot(Samusik_01_subset$tsne, pch = 16, cex = 0.5, 
+     col = ifelse(gate_vector == 1, "firebrick3", "lightsteelblue"))
+polygon(pol, lty = 2)
+table(gate_vector)
+
+# Define cluster colors (here there are 30 colors) from Nowicka et al F1000
+color_clusters <- c("#DC050C", "#FB8072", "#1965B0", "#7BAFDE", "#882E72",
+  "#B17BA6", "#FF7F00", "#FDB462", "#E7298A", "#E78AC3",
+  "#33A02C", "#B2DF8A", "#55A1B1", "#8DD3C7", "#A6761D",
+  "#E6AB02", "#7570B3", "#BEAED4", "#666666", "#999999",
+  "#aa8282", "#d4b7b7", "#8600bf", "#ba5ce3", "#808000",
+  "#aeae5c", "#1e90ff", "#00bfff", "#56ff0d", "#ffff00")
+
+plot(Samusik_01_subset$tsne, pch = 16, cex = 0.5, 
+     col = color_clusters[as.factor(Samusik_01_subset$labels)])
+
+# Compute hypergate
+hg_output = hypergate(xp = Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels], gate_vector = gate_vector, level = 1, verbose = FALSE)
+# hg_output
+
+plot_gating_strategy(gate = hg_output, xp = Samusik_01_subset$xp_src[, 
+    Samusik_01_subset$regular_channels], gate_vector = gate_vector, 
+    level = 1, highlight = "firebrick3")
+hgate_info(hg_output)
+
+# Characterize the markers that target the group
+gating_predicted = subset_matrix_hg(hg_output,
+  Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels])
+table(ifelse(gating_predicted, "Gated-in", "Gated-out"),
+      ifelse(gate_vector == 1, "Events of interest", "Others"))
+#
+bm = boolmat(gate = hg_output,
+  xp = Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels])
+head(bm)
+```
+
+### C5.0 alternative
+
+The typical model is below.
+```{r}
+library(C50)
+model <- C5.0(Samusik_01_subset$xp_src[,Samusik_01_subset$regular_channels], as.factor(gate_vector))
+summary(model)
+```
+C5.0 reports the same markers and order similarly. The importance of each marker is not the same as hypergate, but the message is the same. Out of 126 events selected on the tsne plot, 116 are correctly identified by the last rule, but 10 are missed.
+
+We can also focuss on rules that gives an easier interpretation.
+```{r}
+model <- C5.0(Samusik_01_subset$xp_src[,Samusik_01_subset$regular_channels], as.factor(gate_vector), rules = TRUE)
+summary(model)
+```
+Same summary, but reults consists in rules.
+
+Let's see the latest one.
+```{r}
+# Rule 4: (116, lift 15.7)
+# 	Ly6C <= 2.884321
+# 	SiglecF > 2.152557
+# 	cKit <= 1.794831
+# 	->  class 1  [0.992]
+in.rule = rep(TRUE, length(gate_vector))
+in.rule = in.rule & Samusik_01_subset$xp_src[,"Ly6C"] <= 2.884321
+in.rule = in.rule & Samusik_01_subset$xp_src[,"SiglecF"] > 2.152557
+in.rule = in.rule & Samusik_01_subset$xp_src[,"cKit"]  <= 1.794831
+table(in.rule, gate_vector)
+# Columns are the truth, the groups we defined
+# Rows are the prediction, the groups the algorithm defined
+# The last rule retains 116 events, 116 belong to the group, 0 are out of the group, but 10 events of the group are missing
+```
+
+
+## Reducing markers
+
+## Reoptimize strategy, without Ly6C
+
+The proposed optimization without Ly6C in the signature.
+```{r}
+hg_output_polished = reoptimize_strategy(gate = hg_output, channels_subset = c("SiglecF_min", "cKit_max"), xp = Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels], gate_vector = gate_vector, level = 1)
+
+gating_predicted_polished = subset_matrix_hg(hg_output_polished,
+  Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels])
+table(ifelse(gating_predicted_polished, "Gated-in", "Gated-out"),
+      ifelse(gate_vector == 1, "Events of interest", "Others"))
+
+plot_gating_strategy(gate = hg_output_polished, xp = Samusik_01_subset$xp_src[, 
+    Samusik_01_subset$regular_channels], gate_vector = gate_vector, 
+    level = 1, highlight = "firebrick3")
+hgate_info(hg_output_polished)
+```
+
+Let's see if we remove the Ly6C marker.
+```{r}
+hg_output1 = hypergate(xp = Samusik_01_subset$xp_src[,setdiff(Samusik_01_subset$regular_channels, c("Ly6C"))], gate_vector = gate_vector, level = 1, verbose = FALSE)
+gating_predicted1 = subset_matrix_hg(hg_output1,
+  Samusik_01_subset$xp_src[, setdiff(Samusik_01_subset$regular_channels, c("Ly6C"))])
+table(ifelse(gating_predicted, "Gated-in", "Gated-out"),
+      ifelse(gate_vector == 1, "Events of interest", "Others"))
+
+plot_gating_strategy(gate = hg_output1, xp = Samusik_01_subset$xp_src[, 
+    Samusik_01_subset$regular_channels], gate_vector = gate_vector, 
+    level = 1, highlight = "firebrick3")
+hgate_info(hg_output1)
+```
+The result is nearly the same.
+
+Let's see if we remove the SiglecF marker.
+```{r}
+hg_output_polished2 = reoptimize_strategy(gate = hg_output, channels_subset = c("SiglecF_min"), xp = Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels], 
+    gate_vector = gate_vector, level = 1)
+
+plot_gating_strategy(gate = hg_output_polished2, xp = Samusik_01_subset$xp_src[, 
+    Samusik_01_subset$regular_channels], gate_vector = gate_vector, 
+    level = 1, highlight = "firebrick3")
+
+gating_predicted_polished2 = subset_matrix_hg(hg_output_polished2,
+  Samusik_01_subset$xp_src[, Samusik_01_subset$regular_channels])
+table(ifelse(gating_predicted_polished2, "Gated-in", "Gated-out"),
+      ifelse(gate_vector == 1, "Events of interest", "Others"))
+hgate_info(hg_output_polished2)
+```
+
+
+### C5.0 alternative
+
+Maybe we can prune the tree at a higher level, but let's remove a marker and redo computation.
+
+Let's remove Ly6C from markers.
+```{r}
+# without Ly6C
+model_reoptimzed <- C5.0(Samusik_01_subset$xp_src[,setdiff(Samusik_01_subset$regular_channels, c("Ly6C"))], as.factor(gate_vector), rules = TRUE)
+summary(model_reoptimzed)
+
+# Rule 4: (114/1, lift 15.6)
+# F480 > 1.084815
+# SiglecF > 2.152557
+# cKit <= 1.794831
+# ->  class 1  [0.983]
+in.rule = rep(TRUE, length(gate_vector))
+in.rule = in.rule & Samusik_01_subset$xp_src[,"F480"] > 1.084815
+in.rule = in.rule & Samusik_01_subset$xp_src[,"SiglecF"] > 2.152557
+in.rule = in.rule & Samusik_01_subset$xp_src[,"cKit"] <= 1.794831
+table(in.rule, gate_vector)
+# While 13 events are missing, nearly all events are correctly identified
+
+# Rule 5: (114/1, lift 15.6)
+# SiglecF > 2.152557
+# cKit <= 1.794831
+# CD43 <= 2.243915
+# ->  class 1  [0.983]
+in.rule = rep(TRUE, length(gate_vector))
+in.rule = in.rule & Samusik_01_subset$xp_src[,"SiglecF"] > 2.152557
+in.rule = in.rule & Samusik_01_subset$xp_src[,"cKit"] <= 1.794831
+in.rule = in.rule & Samusik_01_subset$xp_src[,"CD43"] <= 2.243915
+table(in.rule, gate_vector)
+# same result with this slightly different rule
+```
+
+```{r}
+# without SiglecF
+model_reoptimzed2 <- C5.0(Samusik_01_subset$xp_src[,setdiff(Samusik_01_subset$regular_channels, c("SiglecF"))], as.factor(gate_vector), rules = TRUE)
+summary(model_reoptimzed2)
+# no simple rule
+# Rule 10: (79, lift 15.7)
+# 	F480 > 1.157256
+# 	Ly6C <= 1.869782
+# 	Foxp3 > 0.07933632
+# 	cKit <= 1.819595
+# 	CD43 <= 2.478766
+# 	CD44 > 3.698416
+# 	->  class 1  [0.988]
+```
+
+
+## Expanding the comparisons
+
+Graphical selection corresponds mainly to pop 8, ie Eosinophils.
+```{r}
+# Identify the targetted cluster among annotated events
+table(gate_vector, Samusik_01_subset$labels)
+
+pops = c("B-cell Frac A-C (pro-B cells)", "Basophils", "CD4 T cells", "CD8 T cells", "Classical Monocytes", "CLP", "CMP", "Eosinophils", "gd T cells", "GMP", "HSC", "IgD- IgMpos B cells", "IgDpos IgMpos B cells", "IgM- IgD- B-cells", "Intermediate Monocytes", "Macrophages", "mDCs", "MEP", "MPP", "NK cells", "NKT cells", "Non-Classical Monocytes", "pDCs", "Plasma Cells")
+
+# Check the amount of populations in the sample
+table(Samusik_01_subset$labels)
+
+# Let select some of the clusters
+gate_vector_multi = Samusik_01_subset$labels
+gate_vector_multi[!Samusik_01_subset$labels %in% c(5, 8, 12, 13, 15, 23)] = 0
+table(gate_vector_multi)
+```
+
+
+### C5.0
+
+```{r}
+model <- C5.0(Samusik_01_subset$xp_src[,Samusik_01_subset$regular_channels], as.factor(gate_vector_multi), rules = TRUE, control = C5.0Control(winnow = TRUE, noGlobalPruning = TRUE))
+summary(model)
+
+# get rules of the model
+c50.rules = strsplit(model$rules, "\\n")[[1]]
+```
+C5.0 is performing very well.
+
+Let's find best rules using F scores.
+```{r}
+# parse rules attributes
+rules = c("conds,cover,TP,lift,class")
+for (i in grep("conds", c50.rules)) {
+  rules = c(rules, sub("conds=\"(\\d+)\" cover=\"(\\d+)\" ok=\"(\\d+)\" lift=\"([0-9.]+)\" class=\"(\\d+)\"", "\\1,\\2,\\3,\\4,\\5", c50.rules[i]))
+}
+rules = read.table(text=paste(rules, collapse = "\n"), sep = ",", header = TRUE)
+targets = as.data.frame(table(gate_vector_multi))
+colnames(targets) = c("class", "Count")
+rules = merge(rules, targets)
+rules = within(rules, {
+  FP = cover - TP
+  FN = Count - TP
+  recall = TP/(TP + FN)
+  purity = TP/(TP + FP)
+  beta = 1
+  Fscore = ifelse(is.nan(purity) | is.nan(recall), 0, 
+                  (1 + beta^2) * (recall * purity)/(recall + beta^2 * purity))
+  rm(beta)
+})
+head(rules)
+
+# find best rule for each class
+rules.best.idx = sapply(unique(rules$class), function(cl) { c50.rules = rules[rules$class == cl, , drop = FALSE]; rownames(c50.rules[which.max(c50.rules$Fscore), , drop = FALSE])})
+rules.best = rules[rules.best.idx,]
+# Compare True Positive (TP) and Count (from manual annotation)
+rules.best
+```
+
+Let's extract rule defintions.
+```{r}
+# parse rules
+rule.defs = c("rule,type,att,cut,result")
+rule.id = 0
+for (i in seq(c50.rules)) {
+  if (substr(c50.rules[i], 1, 6) == "conds=") {
+    rule.id = rule.id + 1
+  }
+  if (substr(c50.rules[i], 1, 5) == "type=") {
+    rule.defs = c(rule.defs, paste0(c(rule.id, sub("type=\"(\\d+)\" att=\"(.+)\" cut=\"([0-9.-]+)\" result=\"([<>])\"", "\\1,\\2,\\3,\\4", c50.rules[i])), collapse = ","))
+  }
+}
+rule.defs = read.table(text=paste(rule.defs, collapse = "\n"), sep = ",", header = TRUE)
+
+# Helpers for C5.0
+C50_info <- function(gate) {
+  with(gate, data.frame(
+    channels = att, sign = ifelse(result == "<", "-", "+"), comp = result, threshold = cut
+  ))
+}
+C50_pheno <- function(gate, collapse = ", ") {
+  with(C50_info(gate), paste0(channels, sign, collapse = collapse))
+}
+
+C50_rule <- function(gate, collapse = ", ", digits = 2) {
+  with(C50_info(gate), paste0(channels, comp, round(threshold, digits), collapse = collapse))
+}
+```
+
+Extract simplified population definitions for biologist.
+```{r}
+# Extract simplified population definitions for biologist
+sapply(rownames(rules.best), function(i) C50_pheno(subset(rule.defs, rule == i)))
+sapply(rownames(rules.best), function(i) C50_rule(subset(rule.defs, rule == i)))
+
+# cbind
+library(knitr)
+kable(rules.best)
+kable(cbind(pheno = sapply(rownames(rules.best), function(i) C50_pheno(subset(rule.defs, rule == i))), pop = c("Others", pops[rules.best$class])))
+```
