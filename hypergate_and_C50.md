@@ -8,6 +8,7 @@ S. Granjeaud - CRCM
 -   [Hypergate example](#hypergate-example)
 -   [Reducing markers](#reducing-markers)
 -   [Expand the number of populations](#expand-the-number-of-populations)
+-   [C5.0 \[Release 2.07 GPL Edition\] Thu Aug 23 11:24:58 2018](#c5.0-release-2.07-gpl-edition-thu-aug-23-112458-2018)
 
 #### Releases
 
@@ -232,7 +233,7 @@ summary(model)
     ##  = as.factor(gate_vector))
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:19:56 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:24:54 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -289,7 +290,7 @@ summary(model)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:19:57 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:24:55 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -520,7 +521,7 @@ summary(model_reoptimzed)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:19:59 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:24:57 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -635,7 +636,7 @@ summary(model_reoptimzed2)
     ##  = as.factor(gate_vector), rules = TRUE)
     ## 
     ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:19:59 2018
+    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:24:57 2018
     ## -------------------------------
     ## 
     ## Class specified by attribute `outcome'
@@ -831,57 +832,54 @@ C50_head_tail <- function(model, head = 20, tail = 30) {
 cat(paste0(C50_head_tail(model), collapse = "\n"))
 ```
 
-    ## 
-    ## C5.0 [Release 2.07 GPL Edition]      Thu Aug 23 11:20:00 2018
-    ## -------------------------------
-    ## 
-    ## Class specified by attribute `outcome'
-    ## 
-    ## Read 2000 cases (37 attributes) from undefined.data
-    ## 
-    ## 25 attributes winnowed
-    ## Estimated importance of remaining attributes:
-    ## 
-    ##      66%  CD43
-    ##      59%  CD11b
-    ##      56%  IgD
-    ##      34%  SiglecF
-    ##      25%  120g8
-    ##      24%  Ly6C
-    ##      14%  B220
-    ##      14%  IgM
-    ##      10%  CD3
-    ## 
-    ## ...truncated result...
-    ## 
-    ## 
-    ##      31   69( 3.5%)   <<
-    ## 
-    ## 
-    ##     (a)   (b)   (c)   (d)   (e)   (f)   (g)    <-classified as
-    ##    ----  ----  ----  ----  ----  ----  ----
-    ##     913     9     6     5     4    21     2    (a): class 0
-    ##      14   298                                  (b): class 5
-    ##                 121                 1          (c): class 8
-    ##                        83                      (d): class 12
-    ##                             169                (e): class 13
-    ##       7                           255          (f): class 15
-    ##                                          92    (g): class 23
-    ## 
-    ## 
-    ##  Attribute usage:
-    ## 
-    ##  100.00% 120g8
-    ##   62.65% CD11b
-    ##   59.35% B220
-    ##   57.35% CD43
-    ##   47.10% SiglecF
-    ##   45.85% Ly6C
-    ##   43.60% CD3
-    ##   33.10% IgD
-    ##   14.25% CD4
-    ##   13.10% IgM
-    ##    1.80% CD19
+C5.0 \[Release 2.07 GPL Edition\] Thu Aug 23 11:24:58 2018
+----------------------------------------------------------
+
+Class specified by attribute \`outcome'
+
+Read 2000 cases (37 attributes) from undefined.data
+
+25 attributes winnowed Estimated importance of remaining attributes:
+
+     66%  CD43
+     59%  CD11b
+     56%  IgD
+     34%  SiglecF
+     25%  120g8
+     24%  Ly6C
+     14%  B220
+     14%  IgM
+     10%  CD3
+
+...truncated result...
+
+        31   69( 3.5%)   <<
+
+
+       (a)   (b)   (c)   (d)   (e)   (f)   (g)    <-classified as
+      ----  ----  ----  ----  ----  ----  ----
+       913     9     6     5     4    21     2    (a): class 0
+        14   298                                  (b): class 5
+                   121                 1          (c): class 8
+                          83                      (d): class 12
+                               169                (e): class 13
+         7                           255          (f): class 15
+                                            92    (g): class 23
+
+
+    Attribute usage:
+
+    100.00% 120g8
+     62.65% CD11b
+     59.35% B220
+     57.35% CD43
+     47.10% SiglecF
+     45.85% Ly6C
+     43.60% CD3
+     33.10% IgD
+     14.25% CD4
+     13.10% IgM
+      1.80% CD19
 
 C5.0 is performing very well.
 

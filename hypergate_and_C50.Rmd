@@ -319,7 +319,7 @@ table(gate_vector_multi)
 ### C5.0
 
 Let's apply C5.0 to all those groups at once.
-```{r}
+```{r, results="asis"}
 model <- C5.0(Samusik_01_subset$xp_src[,Samusik_01_subset$regular_channels], as.factor(gate_vector_multi), rules = TRUE, control = C5.0Control(winnow = TRUE, noGlobalPruning = TRUE))
 C50_head_tail <- function(model, head = 20, tail = 30) {
   model_str <- strsplit(model$output, "\\n")[[1]]
